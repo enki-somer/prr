@@ -68,6 +68,17 @@
     font-size: 13px;
     color: var(--text-secondary);
   }
+  .date-banner {
+    margin-top: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--blue-badge-text);
+    background: var(--blue-dim);
+    border: 1px solid rgba(87,148,242,0.35);
+    border-radius: 6px;
+    padding: 10px 14px;
+    line-height: 1.5;
+  }
 
   /* ── Tabs ── */
   .tabs {
@@ -251,7 +262,8 @@
 
 <div class="dash-header">
   <h1>Lightspeed Iraq — Field Service KPI Dashboard</h1>
-  <p class="subtitle">10,554 work orders &nbsp;·&nbsp; November 2025 – April 2026 &nbsp;·&nbsp; Iraqi FTTH ISP &nbsp;·&nbsp; Data as of: Apr 30, 2026 &nbsp;·&nbsp; Generated: 2026-06-14</p>
+  <p class="subtitle">10,554 work orders</p>
+  <p class="date-banner">All data in this dashboard covers <strong>1 November 2025 through 30 April 2026</strong> (inclusive).</p>
 </div>
 
 <div class="tabs">
@@ -261,7 +273,7 @@
   <div class="tab" onclick="showTab('tickets')">Tickets</div>
   <div class="tab" onclick="showTab('failure')">Failures</div>
   <div class="tab" onclick="showTab('timing')">Timing</div>
-  <div class="tab" onclick="showTab('cash')">Cash</div>
+  <!-- <div class="tab" onclick="showTab('cash')">Cash</div> -->
   <div class="tab" onclick="showTab('ops')">Ops &amp; Data</div>
 </div>
 
@@ -270,7 +282,7 @@
   <div class="section">
     <h2>Section 1 — Volume &amp; Status</h2>
     <div class="kpi-grid">
-      <div class="kpi"><div class="label">Total Work Orders</div><div class="value">10,554</div><div class="sub">Nov 2025 – Apr 2026</div></div>
+      <div class="kpi"><div class="label">Total Work Orders</div><div class="value">10,554</div><div class="sub">1 Nov 2025 – 30 Apr 2026</div></div>
       <div class="kpi"><div class="label">Completed (Done)</div><div class="value" style="color:var(--green)">5,739</div><div class="sub">54.4% of all WOs</div></div>
       <div class="kpi"><div class="label">Canceled</div><div class="value" style="color:var(--text-secondary)">4,266</div><div class="sub">40.4% of all WOs</div></div>
       <div class="kpi"><div class="label">Failed</div><div class="value" style="color:var(--red)">458</div><div class="sub">4.3% of all WOs</div></div>
@@ -547,7 +559,7 @@
   </div>
 </div>
 
-<!-- ══════════════ CASH TAB ══════════════ -->
+<!-- ══════════════ CASH TAB ══════════════
 <div class="tab-panel" id="tab-cash">
   <div class="section">
     <h2>Section 7 — Cash Collection</h2>
@@ -598,6 +610,7 @@
     <p class="caveat">Cash figures are field-team-recorded and NOT reconciled against the billing system. They represent field collection activity only and should be treated as directional, not financial-reporting quality.</p>
   </div>
 </div>
+-->
 
 <!-- ══════════════ OPS & DATA TAB ══════════════ -->
 <div class="tab-panel" id="tab-ops">
@@ -690,7 +703,7 @@
 <script>
 /* ── Tab switching ── */
 function showTab(name) {
-  const ids = ['overview','teams','geo','tickets','failure','timing','cash','ops'];
+  const ids = ['overview','teams','geo','tickets','failure','timing','ops']; // 'cash' commented out
   document.querySelectorAll('.tab').forEach((t, i) => {
     t.classList.toggle('active', ids[i] === name);
   });
@@ -894,7 +907,8 @@ new Chart(document.getElementById('c10'), {
   options: { ...defOpts }
 });
 
-/* ── C11: team cash collection rate ── */
+/*
+// ── C11: team cash collection rate ──
 const cashTeams = ['Inst. Babil', 'Inst. Najaf', 'Inst. Diwaniyah', 'Inst. Baiji', 'Al-Hamidiya', 'تيم محمد رشيد', 'Inst. SalahAldeen', 'Inst. Najaf New', 'Inst. Mahmudiya & Erbil', 'Inst. Qasim'];
 const cashRates = [92.9, 91.1, 91.0, 90.1, 86.6, 83.7, 78.0, 65.8, 59.4, 57.1];
 
@@ -913,7 +927,7 @@ new Chart(document.getElementById('c11'), {
   }
 });
 
-/* ── C12: monthly cash trend (IQD) ── */
+// ── C12: monthly cash trend (IQD) ──
 new Chart(document.getElementById('c12'), {
   type: 'line',
   data: {
@@ -941,6 +955,7 @@ new Chart(document.getElementById('c12'), {
     }
   }
 });
+*/
 
 /* ── C13: coverage comparison ── */
 new Chart(document.getElementById('c13'), {
