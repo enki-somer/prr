@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lightspeed Iraq — Field Service KPI Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-canvas:    #111217;
+    --bg-panel:     #1a1d27;
+    --bg-panel-alt: #1f2335;
+    --border:       #2c3043;
+    --border-light: #373e5a;
+    --text-primary: #d0d2db;
+    --text-secondary: #8892b0;
+    --text-muted:   #5a6380;
+    --blue:         #5794f2;
+    --green:        #73bf69;
+    --red:          #f2495c;
+    --orange:       #ff7f40;
+    --amber:        #ffb74d;
+    --purple:       #b877d9;
+    --teal:         #37b5a6;
+    --gray:         #546080;
+    --blue-dim:     rgba(87,148,242,0.15);
+    --green-dim:    rgba(115,191,105,0.15);
+    --red-dim:      rgba(242,73,92,0.15);
+    --amber-dim:    rgba(255,183,77,0.15);
+    --blue-badge-text: #82aaff;
+    --green-badge-text: #73bf69;
+    --red-badge-text: #f2495c;
+    --amber-badge-text: #ffb74d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .page-wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 24px 48px;
+  }
+
+  /* ── Header ── */
+  .dash-header {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dash-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #e8eaf0;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    transition: color .15s, border-color .15s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text-primary); }
+  .tab.active {
+    border-bottom-color: var(--blue);
+    color: var(--blue);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 28px;
+    padding: 20px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .section:last-child { margin-bottom: 0; }
+  h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #c0c4d8;
+    margin-bottom: 16px;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── KPI Grid ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .kpi .label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+  .kpi .value {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+  .kpi .sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Charts ── */
+  .chart-wrap { position: relative; width: 100%; }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Caveat ── */
+  .caveat {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+    background: rgba(87,148,242,0.06);
+    padding: 10px 14px;
+    border-radius: 6px;
+    border-left: 3px solid var(--blue);
+    line-height: 1.6;
+  }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-canvas);
+  }
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .badge-green  { background: var(--green-dim);  color: var(--green-badge-text); }
+  .badge-red    { background: var(--red-dim);    color: var(--red-badge-text); }
+  .badge-amber  { background: var(--amber-dim);  color: var(--amber-badge-text); }
+  .badge-blue   { background: var(--blue-dim);   color: var(--blue-badge-text); }
+
+  /* ── Executive cards ── */
+  .exec-card {
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+  .exec-card:last-child { margin-bottom: 0; }
+  .exec-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--blue-dim);
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .exec-row { display: flex; align-items: flex-start; }
+  .exec-text { font-size: 14px; line-height: 1.6; color: var(--text-primary); }
+  .exec-text strong { color: #e0e4f0; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<div class="dash-header">
+  <h1>Lightspeed Iraq — Field Service KPI Dashboard</h1>
+  <p class="subtitle">10,554 work orders &nbsp;·&nbsp; November 2025 – April 2026 &nbsp;·&nbsp; Iraqi FTTH ISP &nbsp;·&nbsp; Data as of: Apr 30, 2026 &nbsp;·&nbsp; Generated: 2026-06-14</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active"  onclick="showTab('overview')">Overview</div>
+  <div class="tab" onclick="showTab('teams')">Teams</div>
+  <div class="tab" onclick="showTab('geo')">Geography</div>
+  <div class="tab" onclick="showTab('tickets')">Tickets</div>
+  <div class="tab" onclick="showTab('failure')">Failures</div>
+  <div class="tab" onclick="showTab('timing')">Timing</div>
+  <div class="tab" onclick="showTab('cash')">Cash</div>
+  <div class="tab" onclick="showTab('ops')">Ops &amp; Data</div>
+</div>
+
+<!-- ══════════════ OVERVIEW TAB ══════════════ -->
+<div class="tab-panel active" id="tab-overview">
+  <div class="section">
+    <h2>Section 1 — Volume &amp; Status</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Total Work Orders</div><div class="value">10,554</div><div class="sub">Nov 2025 – Apr 2026</div></div>
+      <div class="kpi"><div class="label">Completed (Done)</div><div class="value" style="color:var(--green)">5,739</div><div class="sub">54.4% of all WOs</div></div>
+      <div class="kpi"><div class="label">Canceled</div><div class="value" style="color:var(--text-secondary)">4,266</div><div class="sub">40.4% of all WOs</div></div>
+      <div class="kpi"><div class="label">Failed</div><div class="value" style="color:var(--red)">458</div><div class="sub">4.3% of all WOs</div></div>
+      <div class="kpi"><div class="label">Open (Non-terminal)</div><div class="value" style="color:var(--blue)">91</div><div class="sub">0.9% still active</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:var(--blue)"></span>Installation</span>
+          <span><span class="legend-dot" style="background:var(--orange)"></span>Maintenance</span>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="c1"></canvas></div>
+      </div>
+      <div>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:var(--green)"></span>Done</span>
+          <span><span class="legend-dot" style="background:var(--gray)"></span>Canceled</span>
+          <span><span class="legend-dot" style="background:var(--red)"></span>Failed</span>
+          <span><span class="legend-dot" style="background:var(--blue)"></span>Open</span>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="c2"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Monthly Volume Trend</h2>
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi"><div class="label">Jan 2026</div><div class="value">1,415</div><div class="sub">86.7% done</div></div>
+      <div class="kpi"><div class="label">Feb 2026</div><div class="value">1,863</div><div class="sub">61.7% done</div></div>
+      <div class="kpi"><div class="label">Mar 2026</div><div class="value">2,401</div><div class="sub">45.8% done</div></div>
+      <div class="kpi"><div class="label">Apr 2026</div><div class="value" style="color:var(--amber)">4,733</div><div class="sub">46.8% done ⚠</div></div>
+    </div>
+    <div class="chart-wrap" style="height:230px"><canvas id="c3"></canvas></div>
+    <div class="legend" style="margin-top:10px">
+      <span><span class="legend-dot" style="background:var(--blue)"></span>Installation</span>
+      <span><span class="legend-dot" style="background:var(--orange)"></span>Maintenance</span>
+    </div>
+    <p class="caveat">⚠ April 2026 volume is 3.3× January — a massive ramp. Completion rate peaked at 87% in January (Nov–Dec were lower at 31–38% during initial deployment) then fell to 47% as the system was overwhelmed by volume. Failures first appeared in February (13 cases, 0.7%), continued in March (16 cases, 0.7%), and escalated sharply in April (429 cases, 9.1%).</p>
+  </div>
+
+  <div class="section">
+    <h2>Open Work Orders (91 active)</h2>
+    <table>
+      <thead><tr><th>Stage</th><th>Count</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>New (unassigned)</td><td>42</td><td><span class="badge badge-amber">Needs dispatch</span></td></tr>
+        <tr><td>Rescheduled</td><td>38</td><td><span class="badge badge-amber">Awaiting visit</span></td></tr>
+        <tr><td>Ongoing</td><td>5</td><td><span class="badge badge-blue">In progress</span></td></tr>
+        <tr><td>Assigned</td><td>4</td><td><span class="badge badge-blue">Technician assigned</span></td></tr>
+        <tr><td>On the way</td><td>2</td><td><span class="badge badge-blue">En route</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════ TEAMS TAB ══════════════ -->
+<div class="tab-panel" id="tab-teams">
+  <div class="section">
+    <h2>Section 2 — Team Performance</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Total Teams</div><div class="value">57</div></div>
+      <div class="kpi"><div class="label">Best Completion</div><div class="value" style="color:var(--green)">92.4%</div><div class="sub">Installation Babil</div></div>
+      <div class="kpi"><div class="label">Worst Completion</div><div class="value" style="color:var(--red)">9.4%</div><div class="sub">Installation Baghdad</div></div>
+      <div class="kpi"><div class="label">Highest Failure Rate</div><div class="value" style="color:var(--red)">41.3%</div><div class="sub">Installation Sadr City</div></div>
+    </div>
+    <div class="chart-wrap" style="height:340px"><canvas id="c4"></canvas></div>
+    <div class="legend" style="margin-top:10px"><span><span class="legend-dot" style="background:var(--blue)"></span>Completion rate</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Failure Rate vs Reschedule Rate by Team</h2>
+    <div class="chart-wrap" style="height:300px"><canvas id="c5"></canvas></div>
+    <div class="legend" style="margin-top:10px">
+      <span><span class="legend-dot" style="background:var(--red)"></span>Failure rate</span>
+      <span><span class="legend-dot" style="background:var(--amber)"></span>Reschedule rate</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Team Performance Scorecard — Maintenance (cycle time meaningful only alongside completion rate)</h2>
+    <table>
+      <thead><tr><th>Team</th><th>Total WOs</th><th>Completion %</th><th>Cancellation %</th><th>Avg Cycle Time<br><span style="font-weight:400;font-size:10px">(completed jobs only)</span></th><th>Honest rank</th></tr></thead>
+      <tbody>
+        <tr><td>Maintenance Al-Budoor compound</td><td>97</td><td><span class="badge badge-green">82.5%</span></td><td>16.5%</td><td>0.14 days</td><td><span class="badge badge-green">Best overall</span></td></tr>
+        <tr><td>Maintenance Qasim</td><td>176</td><td><span class="badge badge-green">68.8%</span></td><td>28.4%</td><td>0.15 days</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Maintenance Najaf New</td><td>102</td><td><span class="badge badge-green">52.0%</span></td><td>43.1%</td><td>0.04 days</td><td><span class="badge badge-blue">OK</span></td></tr>
+        <tr><td>Alhurya+Algazalya Maintenance</td><td>2,773</td><td>51.0%</td><td>45.6%</td><td>0.15 days</td><td><span class="badge badge-blue">OK (largest team)</span></td></tr>
+        <tr><td>Maintenance Baiji</td><td>364</td><td>49.5%</td><td>37.4%</td><td>0.19 days</td><td><span class="badge badge-blue">OK</span></td></tr>
+        <tr><td>Maintenance Kut New</td><td>235</td><td>38.3%</td><td>46.8%</td><td>0.53 days</td><td><span class="badge badge-amber">Below avg</span></td></tr>
+        <tr><td>Maintenance Mahmudiya &amp; Erbi New</td><td>545</td><td><span class="badge badge-amber">36.3%</span></td><td><span class="badge badge-amber">54.3%</span></td><td>0.13 days</td><td><span class="badge badge-amber">Below avg — 1 month data only</span></td></tr>
+        <tr><td>Maintenance Sadr City</td><td>140</td><td><span class="badge badge-red">32.1%</span></td><td>50.0%</td><td>0.56 days</td><td><span class="badge badge-red">Weak</span></td></tr>
+        <tr><td>Maintenance Shulaa</td><td>105</td><td><span class="badge badge-red">15.2%</span></td><td>64.8%</td><td>0.06 days</td><td><span class="badge badge-red">Weakest — looks fastest, isn't</span></td></tr>
+      </tbody>
+    </table>
+    <p class="caveat">⚠ Cycle time alone is a survival-bias metric: it only measures the jobs that completed. High-cancellation teams drop difficult jobs and look fast. <strong>Always read completion % and cancellation % together with cycle time.</strong> Maintenance Shulaa has the fastest cycle time (0.06 days) but completes only 15% of jobs. Al-Budoor completes 82.5% at 0.14 days and is the actual best-performing maintenance team.</p>
+  </div>
+
+  <div class="section">
+    <h2>Team Performance Scorecard — Installation (avg cycle time for completed jobs)</h2>
+    <table>
+      <thead><tr><th>Team</th><th>Total WOs</th><th>Completion %</th><th>Cancellation %</th><th>Avg Cycle Time</th><th>Flag</th></tr></thead>
+      <tbody>
+        <tr><td>Installation KUT</td><td>3,024</td><td>53.3%</td><td>46.7%</td><td><span class="badge badge-red">16.4 days</span></td><td><span class="badge badge-red">Backlog — 47 jobs &gt;30 days</span></td></tr>
+        <tr><td>Installation Baghdad</td><td>191</td><td><span class="badge badge-red">9.4%</span></td><td>90.6%</td><td>8.4 days</td><td><span class="badge badge-red">Critical — 90% cancel rate</span></td></tr>
+        <tr><td>Installation SalahAldeen</td><td>141</td><td><span class="badge badge-green">84.4%</span></td><td>15.6%</td><td>4.8 days</td><td><span class="badge badge-amber">Slow</span></td></tr>
+        <tr><td>Alhurya+Algazalya Installation</td><td>389</td><td>48.8%</td><td>45.0%</td><td>3.8 days</td><td><span class="badge badge-amber">Moderate</span></td></tr>
+        <tr><td>Installation Diwaniyah</td><td>144</td><td><span class="badge badge-green">91.0%</span></td><td>9.0%</td><td>3.1 days</td><td><span class="badge badge-blue">OK</span></td></tr>
+        <tr><td>Installation Babil</td><td>184</td><td><span class="badge badge-green">92.4%</span></td><td>7.1%</td><td>2.3 days</td><td><span class="badge badge-green">Best overall</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════ GEO TAB ══════════════ -->
+<div class="tab-panel" id="tab-geo">
+  <div class="section">
+    <h2>Section 3 — Geographic Analysis (all 10,554 WOs)</h2>
+    <div class="chart-wrap" style="height:280px"><canvas id="c6"></canvas></div>
+    <div class="legend" style="margin-top:10px">
+      <span><span class="legend-dot" style="background:var(--blue)"></span>Volume</span>
+      <span><span class="legend-dot" style="background:var(--green)"></span>Completion %</span>
+    </div>
+    <p class="caveat">* "Unzoned" = 545 WOs whose zone is recorded as the system placeholder "FTTH-Zone" (no specific zone assigned), driven by the Alhurya+Algazalya Maintenance team. "Tikrit/Baiji" = zone prefix FTK (Salah Aldeen / Baiji area). "Other" = 267 WOs across FAM, FMU, and FMS prefixes. Kut completion rate corrected to 47.6% (was 47.6 in source data).</p>
+  </div>
+
+  <div class="section">
+    <h2>Placeholder vs Commissioned Zones</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Commissioned Zones</div><div class="value">8,777</div><div class="sub">48.3% done · 5.2% failed</div></div>
+      <div class="kpi"><div class="label">Placeholder Zones</div><div class="value">1,775</div><div class="sub">84.7% done · 0.1% failed</div></div>
+    </div>
+    <p class="caveat">Placeholder zones have a surprisingly high completion rate (84.7% vs 48.3% for commissioned). These are likely maintenance visits for existing subscribers whose zone commissioning is pending — the work is real, the zone code is temporary. Filter placeholders for price or network-level analysis.</p>
+  </div>
+
+  <div class="section">
+    <h2>Top Zones by Failure Rate (min 20 WOs)</h2>
+    <table>
+      <thead><tr><th>Zone</th><th>Total</th><th>Failure Rate</th></tr></thead>
+      <tbody>
+        <tr><td>FBG2487</td><td>20</td><td><span class="badge badge-red">55.0%</span></td></tr>
+        <tr><td>FBG2615-4</td><td>68</td><td><span class="badge badge-red">29.4%</span></td></tr>
+        <tr><td>FBG0059-2</td><td>25</td><td><span class="badge badge-red">28.0%</span></td></tr>
+        <tr><td>FBG1433</td><td>20</td><td><span class="badge badge-amber">25.0%</span></td></tr>
+        <tr><td>FBG1951-2</td><td>22</td><td><span class="badge badge-amber">22.7%</span></td></tr>
+        <tr><td>FKU0079-2</td><td>20</td><td><span class="badge badge-amber">20.0%</span></td></tr>
+      </tbody>
+    </table>
+    <p class="caveat">All high-failure zones are in Baghdad (FBG prefix) or Kut (FKU), suggesting infrastructure or access issues in specific sub-zones.</p>
+  </div>
+
+  <div class="section">
+    <h2>Basra Anomaly</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Basra Work Orders</div><div class="value" style="color:var(--red)">20</div><div class="sub">0% completion rate</div></div>
+    </div>
+    <p class="caveat">Basra (FBS prefix) has 20 work orders with zero completions. This likely reflects a very new or struggling deployment — worth immediate management attention.</p>
+  </div>
+</div>
+
+<!-- ══════════════ TICKETS TAB ══════════════ -->
+<div class="tab-panel" id="tab-tickets">
+  <div class="section">
+    <h2>Section 4 — Helpdesk &amp; Ticket Analysis (maintenance only)</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Maintenance WOs</div><div class="value">5,123</div></div>
+      <div class="kpi"><div class="label">With Helpdesk Ticket</div><div class="value" style="color:var(--green)">5,120</div><div class="sub">99.9% linked</div></div>
+      <div class="kpi"><div class="label">Median Dispatch Time</div><div class="value">3.9 min</div><div class="sub">Ticket → field job</div></div>
+      <div class="kpi"><div class="label">CRM Sync Mismatch</div><div class="value" style="color:var(--amber)">17</div><div class="sub">Done in field, open/pending in CRM</div></div>
+    </div>
+    <div class="chart-wrap" style="height:220px"><canvas id="c7"></canvas></div>
+    <div class="legend" style="margin-top:10px"><span><span class="legend-dot" style="background:var(--blue)"></span>Ticket count</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Top Ticket Types</h2>
+    <table>
+      <thead><tr><th>Type</th><th>Count</th><th>Share</th></tr></thead>
+      <tbody>
+        <tr><td>User Issue</td><td>2,071</td><td>40.4%</td></tr>
+        <tr><td>FAT–User Fiber Cut</td><td>1,374</td><td>26.8%</td></tr>
+        <tr><td>New Subscription Request</td><td>799</td><td>15.6%</td></tr>
+        <tr><td>FAT–User High Power</td><td>435</td><td>8.5%</td></tr>
+        <tr><td>Service Reactivation</td><td>189</td><td>3.7%</td></tr>
+        <tr><td>Pending Physical Installation</td><td>73</td><td>1.4%</td></tr>
+      </tbody>
+    </table>
+    <p class="caveat">67.2% of maintenance is "User Issue" or "Fiber Cut" — suggesting network instability (fiber cuts) is the dominant driver of field visits, not customer-side problems.</p>
+  </div>
+
+  <div class="section">
+    <h2>Ticket-to-Dispatch Speed</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Median (p50)</div><div class="value" style="color:var(--green)">3.9 min</div></div>
+      <div class="kpi"><div class="label">p90</div><div class="value">19 min</div></div>
+      <div class="kpi"><div class="label">p95</div><div class="value">33 min</div></div>
+      <div class="kpi"><div class="label">Max (outlier)</div><div class="value" style="color:var(--red)">81 days</div><div class="sub">1,943 hours — data anomaly</div></div>
+    </div>
+    <p class="caveat">Dispatch is extremely fast — the median ticket becomes a field job in under 4 minutes, pointing to automated routing. The 81-day max is a clear data anomaly (stale ticket finally dispatched).</p>
+  </div>
+</div>
+
+<!-- ══════════════ FAILURE TAB ══════════════ -->
+<div class="tab-panel" id="tab-failure">
+  <div class="section">
+    <h2>Section 5 — Failure &amp; Reschedule Analysis</h2>
+    <p class="caveat" style="margin-bottom:16px">ℹ <strong>Two separate failure counts exist in this data.</strong> The "Failed" KPI on the Overview tab (458) counts jobs whose <em>final stage</em> is "Task Failed" — permanently closed as failed. The "Jobs with Any Failure" count below (3,102) counts jobs that had <em>at least one failure action logged by a technician</em> during their lifecycle, regardless of final outcome — many of those were later re-dispatched, completed, or canceled.</p>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Jobs with Any Failure</div><div class="value">3,102</div><div class="sub">29.4% of all WOs — had ≥1 failure event</div></div>
+      <div class="kpi"><div class="label">Recovery Rate</div><div class="value" style="color:var(--red)">8.2%</div><div class="sub">254 of 3,102 — failure event → eventually done</div></div>
+      <div class="kpi"><div class="label">Multi-failure Jobs</div><div class="value">482</div><div class="sub">&gt;1 failure logged</div></div>
+      <div class="kpi"><div class="label">Missing Failure Reason</div><div class="value" style="color:var(--amber)">168</div><div class="sub">Lookup table gap in Odoo</div></div>
+    </div>
+    <div class="chart-wrap" style="height:200px"><canvas id="c8"></canvas></div>
+    <div class="legend" style="margin-top:10px"><span><span class="legend-dot" style="background:var(--red)"></span>Number of jobs</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Top Failure Reasons (translated from Arabic)</h2>
+    <table>
+      <thead><tr><th>Reason</th><th>Count</th><th>Category</th></tr></thead>
+      <tbody>
+        <tr><td>Subscriber says service is working fine — no maintenance needed</td><td>700</td><td><span class="badge badge-amber">False call-out</span></td></tr>
+        <tr><td>Issue already resolved by local agent</td><td>559</td><td><span class="badge badge-blue">Pre-resolved</span></td></tr>
+        <tr><td>Duplicate ticket</td><td>513</td><td><span class="badge badge-amber">Process waste</span></td></tr>
+        <tr><td>Subscriber not answering calls</td><td>337</td><td><span class="badge badge-amber">Unreachable</span></td></tr>
+        <tr><td>Subscriber not home — will call later</td><td>199</td><td><span class="badge badge-amber">Unreachable</span></td></tr>
+        <tr><td>Subscriber on a different network (FTTH)</td><td>101</td><td><span class="badge badge-red">Wrong subscriber</span></td></tr>
+        <tr><td>Subscriber on wireless — not FTTH</td><td>81</td><td><span class="badge badge-red">Wrong subscriber</span></td></tr>
+        <tr><td>Subscriber refuses — price too high</td><td>74</td><td><span class="badge badge-red">Churn risk</span></td></tr>
+        <tr><td> High Power</td><td>72</td><td><span class="badge badge-red">Signal / Infrastructure</span></td></tr>
+        <tr><td>Outside the zone boundary</td><td>71</td><td><span class="badge badge-red">Coverage gap</span></td></tr>
+        <tr><td>No FAT port available nearby</td><td>59</td><td><span class="badge badge-red">Network capacity gap</span></td></tr>
+        <tr><td>Wrong subscriber contact number</td><td>53</td><td><span class="badge badge-amber">Data quality</span></td></tr>
+      </tbody>
+    </table>
+    <p class="caveat">The #1 and #2 reasons (1,259 combined) are "false call-outs": service was already fine or fixed. Duplicate tickets (#3, 513 cases) compound the waste. Together these three reason codes account for over 1,770 unnecessary field visits — a major efficiency opportunity.</p>
+  </div>
+</div>
+
+<!-- ══════════════ TIMING TAB ══════════════ -->
+<div class="tab-panel" id="tab-timing">
+  <div class="section">
+    <h2>Section 6 — Timing &amp; Cycle Time</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Median Cycle Time</div><div class="value" style="color:var(--green)">Same-day</div><div class="sub">Majority close day-of-request</div></div>
+      <div class="kpi"><div class="label">Mean Cycle Time</div><div class="value">5.2 days</div><div class="sub">Skewed by installations</div></div>
+      <div class="kpi"><div class="label">Same-day Completions</div><div class="value" style="color:var(--green)">61.7%</div><div class="sub">3,541 of 5,739 done</div></div>
+      <div class="kpi"><div class="label">Long-running (&gt;30 days)</div><div class="value" style="color:var(--red)">71</div><div class="sub">Max: 79 days</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <h2 style="font-size:13px;margin-bottom:10px">Installation Cycle Time</h2>
+        <div class="chart-wrap" style="height:200px"><canvas id="c9"></canvas></div>
+      </div>
+      <div>
+        <h2 style="font-size:13px;margin-bottom:10px">Maintenance Cycle Time</h2>
+        <div class="chart-wrap" style="height:200px"><canvas id="c10"></canvas></div>
+      </div>
+    </div>
+    <p class="caveat">Maintenance teams are extremely efficient — 85.6% close same-day and 90%+ within 1 day. Installations average 8.8 days with high variance (0–79 days); 44.3% close same-day. Installation KUT accounts for 47 of 71 long-running jobs (&gt;30 days), suggesting systematic queuing or resource issues in the Kut region.</p>
+  </div>
+
+  <div class="section">
+    <h2>Same-day Completion Deep Dive</h2>
+    <table>
+      <thead><tr><th>Task Type</th><th>Same-day (0 days)</th><th>Total Done</th><th>Rate</th></tr></thead>
+      <tbody>
+        <tr><td>Maintenance</td><td>2,069</td><td>2,418</td><td><span class="badge badge-green">85.6%</span></td></tr>
+        <tr><td>Installation</td><td>1,472</td><td>3,321</td><td><span class="badge badge-amber">44.3%</span></td></tr>
+      </tbody>
+    </table>
+    <p class="caveat">Note: 40 work orders have cycle_time_days = -1 (all maintenance — likely a 1-day timezone offset in the Odoo export, affecting 1.7% of maintenance completions). These are excluded from the same-day analysis.</p>
+  </div>
+</div>
+
+<!-- ══════════════ CASH TAB ══════════════ -->
+<div class="tab-panel" id="tab-cash">
+  <div class="section">
+    <h2>Section 7 — Cash Collection</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Cash-collected WOs</div><div class="value">2,551</div><div class="sub">24.2% of all orders</div></div>
+      <div class="kpi"><div class="label">Collection Rate (done)</div><div class="value">43.9%</div><div class="sub">Of completed jobs</div></div>
+      <div class="kpi"><div class="label">Median Amount</div><div class="value" style="color:var(--green)">9,500 IQD</div><div class="sub">Per cash-collected visit</div></div>
+      <div class="kpi"><div class="label">Max Single Collection</div><div class="value">420,000 IQD</div><div class="sub">Field-team-recorded</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <h2 style="font-size:13px;margin-bottom:10px">Collection Rate by Task Type <span style="font-weight:400;color:var(--text-secondary)">(of completed jobs)</span></h2>
+        <table>
+          <thead><tr><th>Type</th><th>Rate</th><th>n</th></tr></thead>
+          <tbody>
+            <tr><td>Installation</td><td>41.0%</td><td>1,363 / 3,321 done</td></tr>
+            <tr><td>Maintenance</td><td>47.8%</td><td>1,157 / 2,418 done</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:8px">Overall rate against all WOs: 25.3% installation / 22.9% maintenance (inflated by canceled &amp; failed orders — not meaningful for field performance).</p>
+      </div>
+      <div>
+        <h2 style="font-size:13px;margin-bottom:10px">Amount Percentiles (IQD) <span style="font-weight:400;color:var(--text-secondary)">(n=2,551 cash-collected orders only)</span></h2>
+        <table>
+          <thead><tr><th>Percentile</th><th>Amount (IQD)</th></tr></thead>
+          <tbody>
+            <tr><td>p25</td><td>1,000</td></tr>
+            <tr><td>p50</td><td>9,500</td></tr>
+            <tr><td>p75</td><td>15,000</td></tr>
+            <tr><td>p90</td><td>35,000</td></tr>
+            <tr><td>p99</td><td>60,000</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:8px">No official maintenance price is populated in Odoo. All amounts reflect field-team-recorded cash only, not a price schedule.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Top Teams by Cash Collection Rate</h2>
+    <div class="chart-wrap" style="height:280px"><canvas id="c11"></canvas></div>
+    <div class="legend" style="margin-top:10px"><span><span class="legend-dot" style="background:var(--green)"></span>Collection rate</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Monthly Cash Trend (IQD)</h2>
+    <div class="chart-wrap" style="height:220px"><canvas id="c12"></canvas></div>
+    <p class="caveat">Cash figures are field-team-recorded and NOT reconciled against the billing system. They represent field collection activity only and should be treated as directional, not financial-reporting quality.</p>
+  </div>
+</div>
+
+<!-- ══════════════ OPS & DATA TAB ══════════════ -->
+<div class="tab-panel" id="tab-ops">
+  <div class="section">
+    <h2>Section 8 — Technician &amp; Action Log Activity</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Action Log Coverage (Maintenance)</div><div class="value" style="color:var(--green)">97.6%</div></div>
+      <div class="kpi"><div class="label">Action Log Coverage (Installation)</div><div class="value" style="color:var(--red)">48.9%</div></div>
+      <div class="kpi"><div class="label">Done with No App Logging</div><div class="value" style="color:var(--amber)">1,365</div><div class="sub">23.8% of done WOs</div></div>
+      <div class="kpi"><div class="label">Recovery Jobs (fail→done)</div><div class="value">254</div><div class="sub">8.2% of failure cases</div></div>
+    </div>
+    <p class="caveat">1,362 of 1,365 "done with no app data" jobs are installations — technicians for installations are not using the mobile app at all in large numbers. This is a process compliance gap, not a system error.
+
+      <br><br><strong>Why is installation action log coverage only 48.9%?</strong> The Odoo mobile field service app requires technicians to manually tap through each stage (Assign → On The Way → Ongoing → Done/Failed). Maintenance teams adopted this workflow early and follow it consistently (97.6% coverage). Installation teams, particularly in the KUT region which handles 3,024 WOs, often complete jobs without opening the app — the team leader marks the work order done directly in the back-office system, bypassing the mobile workflow entirely. The root cause is training and enforcement, not a system defect.</p>
+  </div>
+
+  <div class="section">
+    <h2>Technician Name Coverage</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Overall NULL Rate</div><div class="value" style="color:var(--amber)">33.6%</div></div>
+      <div class="kpi"><div class="label">Installation NULL Rate</div><div class="value" style="color:var(--red)">54.5%</div></div>
+      <div class="kpi"><div class="label">Maintenance NULL Rate</div><div class="value" style="color:var(--orange)">11.4%</div></div>
+    </div>
+    <p class="caveat"><strong>Why is technician name missing?</strong> Odoo's field service module assigns work orders to a <em>team</em>, not necessarily to an individual. For installation jobs, the team leader records completion without logging the individual technician who did the physical work. The field in Odoo (<code>user_id</code>) is optional on the work order form and was not enforced during the rollout period. This means individual-level performance tracking, accountability, and payroll reconciliation are not possible for 54.5% of installation records from the source system. This is a data entry policy gap, not a technical limitation.</p>
+  </div>
+
+  <div class="section">
+    <h2>Section 9 — Network Location Data Coverage</h2>
+    <div class="chart-wrap" style="height:240px"><canvas id="c13"></canvas></div>
+    <div class="legend" style="margin-top:10px">
+      <span><span class="legend-dot" style="background:var(--gray)"></span>System FK / base (non-zero only)</span>
+      <span><span class="legend-dot" style="background:var(--blue)"></span>After parsing description</span>
+    </div>
+    <div class="kpi-grid" style="margin-top:16px">
+      <div class="kpi"><div class="label">desc_fat recovers missing FK</div><div class="value" style="color:var(--green)">3,463</div><div class="sub">WOs recovered via description</div></div>
+      <div class="kpi"><div class="label">GPS from System</div><div class="value" style="color:var(--amber)">55.6%</div><div class="sub">Non-zero only; 44.4% are 0°,0° defaults</div></div>
+      <div class="kpi"><div class="label">GPS from Field Template</div><div class="value">68.1%</div><div class="sub">Maintenance coverage</div></div>
+    </div>
+    <p class="caveat">Parsing the description template field recovered FAT data for 3,463 work orders — a massive analytical gain. For maintenance, FAT coverage jumped from 12.6% → 78.8%. System GPS coverage is 55.6% (5,868 WOs) for non-zero coordinates — the remaining 44.4% (4,686 WOs) contain the coordinate 0°,0° (Gulf of Guinea / Null Island), which is Odoo's default when no GPS lock was recorded. Only description-parsed GPS (68.1% of maintenance) represents real field-recorded site locations.
+
+      <br><br><strong>Why is FAT linkage missing for 42.5% of WOs?</strong> The <code>fat_id</code> field on a work order in Odoo is a voluntary lookup — field coordinators are not required to select a FAT when creating the job. During the early deployment period (Nov–Jan), data entry was faster and less structured. The FAT reference only became consistently used once the description template was standardised, which is why parsing the template text recovered 3,463 records.
+
+      <br><br><strong>Why is GPS showing 0°,0° (Null Island) for 44.4% of WOs?</strong> Odoo stores GPS as a decimal coordinate pair defaulting to <code>0.0, 0.0</code> when the field is not populated. The mobile app records GPS when a technician logs an action (assign, on-the-way, etc.). For installation jobs where the app was not used (48.9% of installations), no GPS was ever written — so the coordinate stays at the system default 0°,0°. This is not a map error; it is an empty field presented as a coordinate.</p>
+  </div>
+</div>
+
+<!-- ══════════════ EXECUTIVE TAB (hidden — not ready for presentation) ══════════════
+<div class="tab-panel" id="tab-exec">
+  <div class="section">
+    <h2>Board-level Executive Summary — 8 Key Findings</h2>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">1</span><span class="exec-text"><strong>Rapid growth is straining operations.</strong> Monthly work orders grew from 52 in November 2025 to 4,733 in April 2026. The operationally meaningful growth rate is <strong>3.3× from January to April</strong> (1,415 → 4,733) — three stable months of like-for-like comparison. Completion rates peaked at <strong>87% in January</strong> (operational high-water mark) and fell to 47% in April as volume overwhelmed capacity. Failures first appeared in February (0.7%), not April — by April the failure rate had escalated to 9.1%. The network is being deployed at a pace that field operations cannot yet absorb.</span></div>
+    </div>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">2</span><span class="exec-text"><strong>40% of all work orders are canceled — and many are avoidable.</strong> 4,266 of 10,554 jobs were canceled. The top three failure reasons (false call-outs, pre-resolved issues, duplicate tickets) account for ~1,770 unnecessary field visits. Improving triage in the contact center and helpdesk would immediately reduce field costs.</span></div>
+    </div>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">3</span><span class="exec-text"><strong>Babil is the network's star; Baghdad is struggling.</strong> Installation Babil achieves a 92.4% completion rate and 91% cash collection. Installation Baghdad sits at 9.4% completion with 173 of 191 jobs canceled. Sadr City has a 41.3% failure rate. Baghdad sub-zones FBG2487, FBG0059-2, and FBG1951-2 have completion rates near zero — these require urgent investigation.</span></div>
+    </div>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">4</span><span class="exec-text"><strong>Installation Kut has a serious backlog problem.</strong> Installation KUT is the highest-volume team (3,024 WOs) but averages 16.4 days to close a completed job, with 47 jobs open for more than 30 days (max 79 days). This is the single largest source of customer waiting time in the network.</span></div>
+    </div>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">5</span><span class="exec-text"><strong>Maintenance is operationally excellent; installations need improvement.</strong> Maintenance teams close 90% of jobs within 1 day. Installation technicians skip the mobile app entirely for 51% of jobs (1,362 done with no app logging), and their names are missing from 54.5% of records. There is no accountability trail for the majority of installation work.</span></div>
+    </div>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">6</span><span class="exec-text"><strong>Only 8.2% of failed jobs ever recover.</strong> Of 3,102 jobs that logged a failure action, just 254 eventually completed. The system is not effectively re-routing or escalating failed work — once a job fails, it almost always stays failed. This represents thousands of potential subscribers who may have given up or churned.</span></div>
+    </div>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">7</span><span class="exec-text"><strong>Cash collection is highly uneven across the network.</strong> Some teams (Babil 92.9%, Najaf 91%, Diwaniyah 91%) collect nearly every time. The system collects a median of 9,500 IQD per visit. Total monthly collection peaked at ~12.3M IQD in February but there is no billing-system reconciliation — these figures cannot be relied upon for financial reporting.</span></div>
+    </div>
+
+    <div class="exec-card">
+      <div class="exec-row"><span class="exec-num">8</span><span class="exec-text"><strong>Network location data has a critical gap — partially rescued by a workaround.</strong> Only 24.7% of work orders (2,609) have a linked FAT (network node) in the database. Parsing free-text description fields recovered an additional 3,463 records, bringing total FAT coverage to 57.5% (6,072 WOs). But <strong>4,482 WOs (42.5%) still have no FAT linkage</strong> from either source. Without FAT data, the company cannot measure failure rates by network node, cannot plan preventive maintenance, and cannot identify which fiber segments are generating most customer complaints.</span></div>
+    </div>
+  </div>
+</div>
+══════════════ END EXECUTIVE TAB ══════════════ -->
+
+</div><!-- /page-wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ── Tab switching ── */
+function showTab(name) {
+  const ids = ['overview','teams','geo','tickets','failure','timing','cash','ops'];
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ids[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + name);
+  });
+}
+
+/* ── Grafana palette ── */
+const BLUE   = '#5794f2';
+const GREEN  = '#73bf69';
+const RED    = '#f2495c';
+const ORANGE = '#ff7f40';
+const AMBER  = '#ffb74d';
+const PURPLE = '#b877d9';
+const TEAL   = '#37b5a6';
+const GRAY   = '#546080';
+
+const gridColor = 'rgba(255,255,255,0.07)';
+const textColor = '#8892b0';
+const font11 = { size: 11 };
+const font10 = { size: 10 };
+
+const baseScales = {
+  x: { ticks: { color: textColor, font: font11 }, grid: { color: gridColor } },
+  y: { ticks: { color: textColor, font: font11 }, grid: { color: gridColor } }
+};
+
+const defOpts = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: baseScales
+};
+
+/* ── C1: status by task type ── */
+new Chart(document.getElementById('c1'), {
+  type: 'bar',
+  data: {
+    labels: ['Done', 'Canceled', 'Failed', 'Open / Other'],
+    datasets: [
+      { label: 'Installation', data: [3321, 1927, 145, 38], backgroundColor: BLUE, borderRadius: 3 },
+      { label: 'Maintenance',  data: [2418, 2339, 313, 53], backgroundColor: ORANGE, borderRadius: 3 }
+    ]
+  },
+  options: { ...defOpts, scales: { x: { ...baseScales.x, stacked: false }, y: { ...baseScales.y } } }
+});
+
+/* ── C2: donut status ── */
+new Chart(document.getElementById('c2'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Done 54.4%', 'Canceled 40.4%', 'Failed 4.3%', 'Open 0.9%'],
+    datasets: [{
+      data: [5739, 4266, 458, 91],
+      backgroundColor: [GREEN, GRAY, RED, BLUE],
+      borderWidth: 2,
+      borderColor: '#1a1d27'
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '62%',
+    plugins: {
+      legend: {
+        display: true,
+        position: 'right',
+        labels: { color: textColor, font: font11, boxWidth: 12, padding: 10 }
+      }
+    }
+  }
+});
+
+/* ── C3: monthly stacked ── */
+new Chart(document.getElementById('c3'), {
+  type: 'bar',
+  data: {
+    labels: ['Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26'],
+    datasets: [
+      { label: 'Installation', data: [52, 90, 1415, 1343, 1336, 1195], backgroundColor: BLUE, borderRadius: 2 },
+      { label: 'Maintenance',  data: [0, 0, 0, 520, 1065, 3538], backgroundColor: ORANGE, borderRadius: 2 }
+    ]
+  },
+  options: {
+    ...defOpts,
+    scales: {
+      x: { ...baseScales.x, stacked: true },
+      y: { ...baseScales.y, stacked: true }
+    }
+  }
+});
+
+/* ── C4: team completion rates (horizontal) ── */
+const teamNames = [
+  'Installation Babil', 'Al-Hamidiya', 'Inst. Mahmudiya & Erbil New',
+  'Inst. Diwaniyah', 'Inst. Babil', 'Inst. Kut New',
+  'Maintenance Baiji', 'Alhurya+Algazalya Maint.',
+  'Inst. KUT', 'Alhurya+Algazalya Inst.', 'Inst. Baghdad', 'Maintenance Shulaa'
+];
+const teamCompl = [92.4, 87.1, 64.4, 62.1, 62, 51.3, 49.5, 50.3, 53.3, 48.8, 9.4, 15.2];
+const teamColors = teamCompl.map(v => v > 70 ? GREEN : v > 45 ? AMBER : RED);
+
+new Chart(document.getElementById('c4'), {
+  type: 'bar',
+  data: { labels: teamNames, datasets: [{ data: teamCompl, backgroundColor: teamColors, borderRadius: 3, borderWidth: 0 }] },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { max: 100, ticks: { callback: v => v + '%', color: textColor, font: font11 }, grid: { color: gridColor } },
+      y: { ticks: { color: textColor, font: font10 }, grid: { display: false } }
+    }
+  }
+});
+
+/* ── C5: failure vs reschedule rates ── */
+const fTeams = ['Sadr City Inst.', 'Maint. Shulaa', 'Inst. Kut New', 'Al-Khadra Inst.', 'Maint. Kut New', 'Maint. Baiji', 'Maint. Mahmudiya', 'Alhurya Maint.', 'Al-Khadra Maint.', 'Alhurya Inst.'];
+const fFail  = [41.3, 20.0, 22.7, 34.6, 13.2, 12.6, 9.0, 3.6, 4.6, 5.7];
+const fResc  = [0, 4.8, 0, 0, 0.9, 0, 0, 0.2, 0.8, 0.5];
+
+new Chart(document.getElementById('c5'), {
+  type: 'bar',
+  data: {
+    labels: fTeams,
+    datasets: [
+      { label: 'Failure rate',    data: fFail, backgroundColor: RED, borderRadius: 3, borderWidth: 0 },
+      { label: 'Reschedule rate', data: fResc, backgroundColor: AMBER, borderRadius: 3, borderWidth: 0 }
+    ]
+  },
+  options: {
+    ...defOpts,
+    scales: {
+      x: { ticks: { color: textColor, font: font10 }, grid: { color: gridColor } },
+      y: { ticks: { callback: v => v + '%', color: textColor, font: font11 }, grid: { color: gridColor } }
+    }
+  }
+});
+
+/* ── C6: governorate grouped (all prefixes, 100% of WOs) ── */
+new Chart(document.getElementById('c6'), {
+  type: 'bar',
+  data: {
+    labels: ['Baghdad', 'Tikrit/Baiji', 'Kut', 'Diwaniyah', 'Babil', 'Unzoned*', 'Najaf', 'Other', 'Basra'],
+    datasets: [
+      { label: 'Volume',       data: [5926, 1155, 786, 779, 752, 545, 324, 267, 20], backgroundColor: BLUE,  yAxisID: 'y',  borderRadius: 3, borderWidth: 0 },
+      { label: 'Completion %', data: [50.4, 68.1, 47.6, 49.4, 73.8, 52.3, 66.0, 58.1, 0], backgroundColor: GREEN, yAxisID: 'y1', borderRadius: 3, borderWidth: 0 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x:  { ticks: { color: textColor, font: font11 }, grid: { color: gridColor } },
+      y:  { ticks: { color: textColor, font: font11 }, grid: { color: gridColor } },
+      y1: { position: 'right', max: 100, ticks: { callback: v => v + '%', color: textColor, font: font11 }, grid: { display: false } }
+    }
+  }
+});
+
+/* ── C7: ticket categories ── */
+new Chart(document.getElementById('c7'), {
+  type: 'bar',
+  data: {
+    labels: ['Incident - Pending Contractor', 'Svc Req - Pending Contractor', 'Service Request', 'Incident - Contact Center', 'Incident', 'Incident - NMC'],
+    datasets: [{ data: [3883, 576, 506, 54, 35, 23], backgroundColor: [BLUE, ORANGE, GREEN, PURPLE, AMBER, TEAL], borderWidth: 0, borderRadius: 3 }]
+  },
+  options: { ...defOpts }
+});
+
+/* ── C8: failure count distribution ── */
+new Chart(document.getElementById('c8'), {
+  type: 'bar',
+  data: {
+    labels: ['0 failures', '1 failure', '2 failures', '3 failures', '4 failures', '5+ failures'],
+    datasets: [{ data: [7452, 2620, 317, 92, 42, 28], backgroundColor: [GREEN, AMBER, ORANGE, RED, RED, RED], borderWidth: 0, borderRadius: 3 }]
+  },
+  options: { ...defOpts }
+});
+
+/* ── C9: Installation cycle time ── */
+new Chart(document.getElementById('c9'), {
+  type: 'bar',
+  data: {
+    labels: ['0 days', '1-5 days', '6-15 days', '16-25 days', '26-30 days', '>30 days'],
+    datasets: [{ data: [1472, 435, 399, 788, 157, 70], backgroundColor: BLUE, borderWidth: 0, borderRadius: 3 }]
+  },
+  options: { ...defOpts }
+});
+
+/* ── C10: maintenance cycle time ── */
+new Chart(document.getElementById('c10'), {
+  type: 'bar',
+  data: {
+    labels: ['0 days', '1 day', '2-5 days', '6-15 days', '>15 days'],
+    datasets: [{ data: [2069, 279, 64, 5, 1], backgroundColor: TEAL, borderWidth: 0, borderRadius: 3 }]
+  },
+  options: { ...defOpts }
+});
+
+/* ── C11: team cash collection rate ── */
+const cashTeams = ['Inst. Babil', 'Inst. Najaf', 'Inst. Diwaniyah', 'Inst. Baiji', 'Al-Hamidiya', 'تيم محمد رشيد', 'Inst. SalahAldeen', 'Inst. Najaf New', 'Inst. Mahmudiya & Erbil', 'Inst. Qasim'];
+const cashRates = [92.9, 91.1, 91.0, 90.1, 86.6, 83.7, 78.0, 65.8, 59.4, 57.1];
+
+new Chart(document.getElementById('c11'), {
+  type: 'bar',
+  data: { labels: cashTeams, datasets: [{ data: cashRates, backgroundColor: GREEN, borderWidth: 0, borderRadius: 3 }] },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { max: 100, ticks: { callback: v => v + '%', color: textColor, font: font11 }, grid: { color: gridColor } },
+      y: { ticks: { color: textColor, font: font10 }, grid: { display: false } }
+    }
+  }
+});
+
+/* ── C12: monthly cash trend (IQD) ── */
+new Chart(document.getElementById('c12'), {
+  type: 'line',
+  data: {
+    labels: ['Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26'],
+    datasets: [{
+      label: 'Cash IQD',
+      data: [1000, 0, 365000, 12277000, 9298000, 9706000],
+      borderColor: AMBER,
+      backgroundColor: 'rgba(255,183,77,0.1)',
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: AMBER,
+      pointBorderColor: '#1a1d27',
+      pointBorderWidth: 2,
+      pointRadius: 5
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: textColor, font: font11 }, grid: { color: gridColor } },
+      y: { ticks: { callback: v => (v/1000000).toFixed(1) + 'M IQD', color: textColor, font: font11 }, grid: { color: gridColor } }
+    }
+  }
+});
+
+/* ── C13: coverage comparison ── */
+new Chart(document.getElementById('c13'), {
+  type: 'bar',
+  data: {
+    labels: ['FAT - all WOs', 'FAT - maintenance', 'GPS - all WOs', 'GPS - maintenance'],
+    datasets: [
+      { label: 'System FK / base (non-zero)',  data: [24.7, 12.6, 55.6, 8.5], backgroundColor: GRAY,  borderRadius: 3, borderWidth: 0 },
+      { label: 'After parsing description',    data: [38.2, 78.8, 33.1, 68.1], backgroundColor: BLUE, borderRadius: 3, borderWidth: 0 }
+    ]
+  },
+  options: {
+    ...defOpts,
+    scales: {
+      x: { ticks: { color: textColor, font: font11 }, grid: { color: gridColor } },
+      y: { max: 110, ticks: { callback: v => v + '%', color: textColor, font: font11 }, grid: { color: gridColor } }
+    }
+  }
+});
+</script>
+</body>
+</html>
