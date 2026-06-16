@@ -185,7 +185,7 @@
     background: rgba(87,148,242,0.06);
     padding: 10px 14px;
     border-radius: 6px;
-    border-left: 3px solid var(--blue);
+    border: 1px solid var(--blue);
     line-height: 1.6;
   }
 
@@ -282,12 +282,13 @@
   <div class="section">
     <h2>Section 1 — Volume &amp; Status</h2>
     <div class="kpi-grid">
-      <div class="kpi"><div class="label">Total Work Orders</div><div class="value">10,554</div><div class="sub">1 Nov 2025 – 30 Apr 2026</div></div>
+      <div class="kpi"><div class="label">Total Work Orders "Tasks"</div><div class="value">10,554</div><div class="sub">1 Nov 2025 – 30 Apr 2026</div></div>
       <div class="kpi"><div class="label">Completed (Done)</div><div class="value" style="color:var(--green)">5,739</div><div class="sub">54.4% of all WOs</div></div>
       <div class="kpi"><div class="label">Canceled</div><div class="value" style="color:var(--text-secondary)">4,266</div><div class="sub">40.4% of all WOs</div></div>
       <div class="kpi"><div class="label">Failed</div><div class="value" style="color:var(--red)">458</div><div class="sub">4.3% of all WOs</div></div>
       <div class="kpi"><div class="label">Open (Non-terminal)</div><div class="value" style="color:var(--blue)">91</div><div class="sub">0.9% still active</div></div>
     </div>
+    <p class="caveat"><strong>Done</strong> = current stage is <em>Done Task Completed</em> (<code>maintenance_stage.done = TRUE</code>). Excludes failed, canceled, and open work orders.</p>
     <div class="two-col">
       <div>
         <div class="legend">
@@ -350,7 +351,7 @@
       <div class="kpi"><div class="label">Highest Failure Rate</div><div class="value" style="color:var(--red)">41.3%</div><div class="sub">Installation Sadr City</div></div>
     </div>
     <div class="chart-wrap" style="height:340px"><canvas id="c4"></canvas></div>
-    <div class="legend" style="margin-top:10px"><span><span class="legend-dot" style="background:var(--blue)"></span>Completion rate</span></div>
+    <div class="legend" style="margin-top:10px"><span><span class="legend-dot" style="background:var(--green)"></span>Completion rate</span></div>
   </div>
 
   <div class="section">
@@ -406,16 +407,16 @@
       <span><span class="legend-dot" style="background:var(--blue)"></span>Volume</span>
       <span><span class="legend-dot" style="background:var(--green)"></span>Completion %</span>
     </div>
-    <p class="caveat">* "Unzoned" = 545 WOs whose zone is recorded as the system placeholder "FTTH-Zone" (no specific zone assigned), driven by the Alhurya+Algazalya Maintenance team. "Tikrit/Baiji" = zone prefix FTK (Salah Aldeen / Baiji area). "Other" = 267 WOs across FAM, FMU, and FMS prefixes. Kut completion rate corrected to 47.6% (was 47.6 in source data).</p>
+    <p class="caveat">* "Unzoned" = 545 tickets whose zone is recorded as the system virtual zone "FTTH-Zone" (no specific zone assigned), driven by the Alhurya+Algazalya Maintenance team. "Tikrit/Baiji" = zone FTK (Salah Aldeen / Baiji area). "Other" = 267 WOs across FAM, FMU, and FMS.</p>
   </div>
 
   <div class="section">
-    <h2>Placeholder vs Commissioned Zones</h2>
+    <h2>Tickets per virtual vs real Zones  </h2>
     <div class="kpi-grid">
-      <div class="kpi"><div class="label">Commissioned Zones</div><div class="value">8,777</div><div class="sub">48.3% done · 5.2% failed</div></div>
-      <div class="kpi"><div class="label">Placeholder Zones</div><div class="value">1,775</div><div class="sub">84.7% done · 0.1% failed</div></div>
+      <div class="kpi"><div class="label">Real Zones that have tickets</div><div class="value">8,777</div><div class="sub">48.3% done · 5.2% failed</div></div>
+      <div class="kpi"><div class="label">Virtual Zones that have tickets</div><div class="value">1,775</div><div class="sub">84.7% done · 0.1% failed</div></div>
     </div>
-    <p class="caveat">Placeholder zones have a surprisingly high completion rate (84.7% vs 48.3% for commissioned). These are likely maintenance visits for existing subscribers whose zone commissioning is pending — the work is real, the zone code is temporary. Filter placeholders for price or network-level analysis.</p>
+    <p class="caveat">Virtual zones have a surprisingly high completion rate (84.7% vs 48.3% for real zones). These are likely maintenance visits for existing subscribers whose zone commissioning is pending — the work is real, the zone code is temporary. Filter virtual zones for price or network-level analysis.</p>
   </div>
 
   <div class="section">
@@ -431,7 +432,7 @@
         <tr><td>FKU0079-2</td><td>20</td><td><span class="badge badge-amber">20.0%</span></td></tr>
       </tbody>
     </table>
-    <p class="caveat">All high-failure zones are in Baghdad (FBG prefix) or Kut (FKU), suggesting infrastructure or access issues in specific sub-zones.</p>
+    <p class="caveat">All high-failure zones are in Baghdad or Kut, suggesting infrastructure or access issues in specific sub-zones.</p>
   </div>
 
   <div class="section">
@@ -439,7 +440,7 @@
     <div class="kpi-grid">
       <div class="kpi"><div class="label">Basra Work Orders</div><div class="value" style="color:var(--red)">20</div><div class="sub">0% completion rate</div></div>
     </div>
-    <p class="caveat">Basra (FBS prefix) has 20 work orders with zero completions. This likely reflects a very new or struggling deployment — worth immediate management attention.</p>
+    <p class="caveat">Basra has 20 tickets with zero completions. This likely reflects a very new or struggling deployment — worth immediate management attention.</p>
   </div>
 </div>
 
@@ -531,7 +532,7 @@
       <div class="kpi"><div class="label">Median Cycle Time</div><div class="value" style="color:var(--green)">Same-day</div><div class="sub">Majority close day-of-request</div></div>
       <div class="kpi"><div class="label">Mean Cycle Time</div><div class="value">5.2 days</div><div class="sub">Skewed by installations</div></div>
       <div class="kpi"><div class="label">Same-day Completions</div><div class="value" style="color:var(--green)">61.7%</div><div class="sub">3,541 of 5,739 done</div></div>
-      <div class="kpi"><div class="label">Long-running (&gt;30 days)</div><div class="value" style="color:var(--red)">71</div><div class="sub">Max: 79 days</div></div>
+      <div class="kpi"><div class="label">Long-running (&gt;30 days)</div><div class="value" style="color:var(--red)">71 day</div><div class="sub">Max: 79 days</div></div>
     </div>
     <div class="two-col">
       <div>
@@ -622,19 +623,9 @@
       <div class="kpi"><div class="label">Done with No App Logging</div><div class="value" style="color:var(--amber)">1,365</div><div class="sub">23.8% of done WOs</div></div>
       <div class="kpi"><div class="label">Recovery Jobs (fail→done)</div><div class="value">254</div><div class="sub">8.2% of failure cases</div></div>
     </div>
-    <p class="caveat">1,362 of 1,365 "done with no app data" jobs are installations — technicians for installations are not using the mobile app at all in large numbers. This is a process compliance gap, not a system error.
+    <p class="caveat">1,362 of 1,365 done jobs with no app logging are installations. Maintenance coverage is 97.6%; installation coverage is 48.9%. This is an installation workflow gap, not a platform-wide failure — but the data does not prove whether the cause is training, back-office bypass, or app-side failure.
 
-      <br><br><strong>Why is installation action log coverage only 48.9%?</strong> The Odoo mobile field service app requires technicians to manually tap through each stage (Assign → On The Way → Ongoing → Done/Failed). Maintenance teams adopted this workflow early and follow it consistently (97.6% coverage). Installation teams, particularly in the KUT region which handles 3,024 WOs, often complete jobs without opening the app — the team leader marks the work order done directly in the back-office system, bypassing the mobile workflow entirely. The root cause is training and enforcement, not a system defect.</p>
-  </div>
-
-  <div class="section">
-    <h2>Technician Name Coverage</h2>
-    <div class="kpi-grid">
-      <div class="kpi"><div class="label">Overall NULL Rate</div><div class="value" style="color:var(--amber)">33.6%</div></div>
-      <div class="kpi"><div class="label">Installation NULL Rate</div><div class="value" style="color:var(--red)">54.5%</div></div>
-      <div class="kpi"><div class="label">Maintenance NULL Rate</div><div class="value" style="color:var(--orange)">11.4%</div></div>
-    </div>
-    <p class="caveat"><strong>Why is technician name missing?</strong> Odoo's field service module assigns work orders to a <em>team</em>, not necessarily to an individual. For installation jobs, the team leader records completion without logging the individual technician who did the physical work. The field in Odoo (<code>user_id</code>) is optional on the work order form and was not enforced during the rollout period. This means individual-level performance tracking, accountability, and payroll reconciliation are not possible for 54.5% of installation records from the source system. This is a data entry policy gap, not a technical limitation.</p>
+      <br><br><strong>Installation teams rarely use the mobile workflow: only 48.9% of installation WOs have any action log, vs 97.6% for maintenance. Of 1,365 done jobs with zero app data, 1,362 are installations. The database shows the gap, not the cause — it cannot distinguish skipped app use, back-office stage changes, or silent app failures. we Treated this as a compliance and accountability risk on installations until operational follow-up confirms the mechanism.</p>
   </div>
 
   <div class="section">
